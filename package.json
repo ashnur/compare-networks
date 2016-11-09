@@ -1,0 +1,30 @@
+{
+  "name": "compare-decentralized-with-distributed",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "debug": "budo index.js -p 9967 --dir app/ --serve bundle.js --live=*.{js,html,css} --pushstate -- -t [ babelify --presets [ es2015 react stage-2 ] --plugins [ transform-es2015-destructuring datascript ] ] -t brfs",
+    "watch-js": "budo index.js --cors --dir app/ -p 9967 --serve js/bundle.js --live=*.{js,html,css} --pushstate -- -t [ babelify --presets [ node6 ] --plugins [ datascript transform-es2015-destructuring browserify-hmr ] ] -t brfs ",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "global": "^4.3.1",
+    "jsnetworkx": "^0.3.4"
+  },
+  "devDependencies": {
+    "babel-plugin-datascript": "^0.2.0",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-latest": "^6.16.0",
+    "babel-preset-node6": "^11.0.0",
+    "babel-preset-react": "^6.16.0",
+    "babel-preset-stage-2": "^6.18.0",
+    "babelify": "^7.3.0",
+    "brfs": "^1.4.3",
+    "browserify-hmr": "^0.3.5",
+    "budo": "^9.2.1"
+  }
+}
