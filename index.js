@@ -1,104 +1,137 @@
 const jsnx = require("jsnetworkx")
-//var G = new jsnx.gnpRandomGraph(126, 0.025)
-const G = new jsnx.fullRaryTree(20, 200)
+//const G = new jsnx.gnpRandomGraph(126, 0.025)
+// const G = new jsnx.binomialGraph(126, 0.023)
+const G = new jsnx.fullRaryTree(2, 200)
+const d3 = require('d3')
 
-var color = d3.scale.category20()
 
-const force = jsnx.draw(G, {
-  element: "#canvas",
-  layoutAttr: {
-    charge: () => Math.random() * -1 * 300,
-    linkDistance: () => Math.random() * 20,
-    linkStrength: () => Math.random(),
-    friction: 0.8,
-    gravity: 0.2
-  },
-  nodeShape: "circle",
-  nodeAttr: {
-    r: 5,
-    title: function(d) { return d.label}
-  },
-  nodeStyle: {
-    color:"red",
-    padding: "10px",
-    margin: "10px",
-    border: "10px solid transparent"
-  },
-  edgeStyle: {
-      fill: "#999"
-  }
-})
+const svg = d3.select("#canvas")
+svg.attr("preserveAspectRatio", "xMidYMid meet")
+svg.attr({ "width": "100%", "height": "100%" })
 
-var neighbors = {}
+const window = require('global/window')
+const width = +window.innerWidth
+const height =  +window.innerHeight
 
-force.nodes().forEach(function(node) {
-    neighbors[node.index] = neighbors[node.index] || []
-})
+const color = d3.scaleOrdinal(d3.schemeCategory20)
 
-force.links().forEach(function(link) {
-    neighbors[link.source.index].push(link.target.index)
-    neighbors[link.target.index].push(link.source.index)
-})
-console.log(neighbors)
-//visual.on("tick", tick)
 
-function tick(tick){
-//  console.log(tick)
+
+
+const nodes = G.nodes().map(node => ({id: node, group: jsnx.shortestPathLength(G, {source: 1, target: node})}))
+const links = G.edges().map(edge => ({source: edge[0], target: edge[1], value: 1}))
+const graph = { nodes, links }
+
+const k = Math.sqrt(nodes.length / (width * height))
+
+const simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(20))
+    .force("charge", d3.forceManyBody().strength(-0.1 / k))
+    .force("center", d3.forceCenter(width / 2, height / 2))
+
+const link = svg.append("g")
+								.attr("class", "links")
+								.selectAll("line")
+								.data(graph.links)
+								.enter().append("line")
+								.attr("stroke-width", function(d) { return Math.sqrt(d.value); })
+
+const node = svg.append("g")
+								.attr("class", "nodes")
+								.selectAll("circle")
+								.data(graph.nodes)
+								.enter().append("circle")
+								.attr("r", 5)
+								.attr("fill", function(d) { return color(d.group); })
+								// .call(d3.drag()
+								// 				.on("start", dragstarted)
+								// 				.on("drag", dragged)
+								// 				.on("end", dragended))
+
+
+
+function update(data){
+	const t = d3.transition().duration(750)
+
+
+	const msg = svg.append("g")
+								 .attr("class", "messages")
+								 .selectAll("line")
+     						 .data(data, function(d) { return d; })
+	msg.exit()
+	 	 .attr("class", "exit")
+		 .transition(t)
+   	 .attr("y", 60)
+     .style("fill-opacity", 1e-6)
+     .remove()
+
+// UPDATE old elements present in new data.
+  msg.attr("class", "update")
+      .attr("y", 0)
+      .style("fill-opacity", 1)
+    .transition(t)
+      .attr("x", function(d, i) { return i * 32; })
+
+  // ENTER new elements present in new data.
+  msg.enter().append("line")
+      .attr("class", "enter")
+      .attr("dy", ".35em")
+      .attr("y", -60)
+      .attr("x", function(d, i) { return i * 32; })
+      .style("fill-opacity", 1e-6)
+      .text(function(d) { return d; })
+    .transition(t)
+      .attr("y", 0)
+      .style("fill-opacity", 1)
+
 }
 
-function transmitter(){
-  const wave = document.createElementNS("http://www.w3.org/2000/svg", "circle")
-  const node = d3.select(this)
-  return wave
+simulation
+		.nodes(graph.nodes)
+		.on("tick", ticked)
+
+simulation.force("link")
+		.links(graph.links)
+
+function ticked() {
+	link
+			.attr("x1", function(d) { return d.source.x; })
+			.attr("y1", function(d) { return d.source.y; })
+			.attr("x2", function(d) { return d.target.x; })
+			.attr("y2", function(d) { return d.target.y; })
+
+	node
+			.attr("cx", function(d) { return d.x; })
+			.attr("cy", function(d) { return d.y; })
 }
 
-d3.selectAll(".node")
-  .on("click", nodeClick)
+function dragstarted(d) {
+    if (!d3.event.active) simulation.alphaTarget(0.3).restart()
+    d.fx = d.x
+    d.fy = d.y
+}
 
-// d3.selectAll(".node")
-//   .append(transmitter)
-G.adj.get(0).get(1).color = "blue"
+function dragged(d) {
+    d.fx = d3.event.x
+    d.fy = d3.event.y
+}
 
-
-function connections(targetIndex){
-  const edges = d3.selectAll(".edge")[0]
-  return edges.filter((edge) => {
-    return edge.__data__.target.index == targetIndex
-  })
+function dragended(d) {
+    if (!d3.event.active) simulation.alphaTarget(0)
+    d.fx = null
+    d.fy = null
 }
 
 
-function nodeClick(d){
-  const node = d3.select(this)
-  // init node with message
-  // node.append("circle").attr("r", 20)
-  // console.log(this, node, d, neighbors[d.index])
-  const links = connections(d.index)
-  links.forEach((l) => {
-    const edge = d3.select(l)
-    const line = edge.select(".line")
-    const length = line.node().getTotalLength()
-    console.log(line, length )
-    line.transition()
-      .duration(2000)
-      .ease("linear")
-      .attrTween("transform", sendMsg())
-    // const sourceVec = [l.source.x, l.source.y]
-    // const targetVec = [l.target.x, l.target.y]
-    // console.log(l, l.source, l.target)
-  })
-  node.attr("msg", Math.random())
-}
+const randNode = require('random-number').gen({min:0, max: nodes.length -1})
+update([rn()]);
 
-function sendMsg(){
-  return function(d, i, a){
-    return function(t){
-      console.log(t)
-      return `translate(10,11)`
-    }
-  }
-}
-
+// Grab a random sample of letters from the alphabet, in alphabetical order.
+d3.interval(function() {
+  update(d3.shuffle(alphabet)
+      .slice(0, Math.floor(Math.random() * 26))
+      .sort());
+}, 1500);
 
 
 // show the node with message

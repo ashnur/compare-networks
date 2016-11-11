@@ -3,6 +3,15 @@ html, body {
     margin: 0;
 }
 html, body, #canvas {
-    height: 95%;
-    width: 95%;
+    height: 98%;
+    width: 98%;
+}
+.links line {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.nodes circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
 }
