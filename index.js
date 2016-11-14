@@ -42,10 +42,10 @@ var node = svg.append("g")
 .enter().append("circle")
 .attr("r", 5)
 .attr("fill", function(d) { return 1 })
-//.call(d3.drag()
-//        .on("start", dragstarted)
-//        .on("drag", dragged)
-//        .on("end", dragended))
+.call(d3.drag()
+       .on("start", dragstarted)
+       .on("drag", dragged)
+       .on("end", dragended))
 
 node.append("title")
  .text(function(d, id) { return id })
@@ -74,17 +74,41 @@ function ticked() {
 }
 
 function update(){
-  var t = d3.transition()
-      .duration(100)
-      .ease(d3.easeLinear)
-
   msg
-    .transition('t')
-    .attrTween("x1", function(d) { const i = d3.interpolate(d.source.x);                                return function(t){ return d.source.x   }})
-    .attrTween("y1", function(d) { const i = d3.interpolate(d.source.y);                                return function(t){ return d.source.x   }})
-    .attrTween("x2", function(d) { const i = d3.interpolateNumber(d.source.x, d.target.x); return function(t){l(i(t)); return i(t)   }})
-    .attrTween("y2", function(d) { const i = d3.interpolateNumber(d.source.y, d.target.y); return function(t){l(i(t)); return i(t)   }})
+    .transition()
+    .duration(2000)
+    .ease(d3.easeLinear)
+    .attrTween("x1", function(d, i, a) {
+      return function(){ return d.source.x }
+    })
+    .attrTween("y1", function(d, i, a) {
+      return function(){ return d.source.y }
+    })
+    .attrTween("x2", function(d) {
+      return d3.interpolateNumber(d.source.x, d.target.x)
+    })
+    .attrTween("y2", function(d) {
+      l(d.source.y, d.target.y)
+      return d3.interpolateNumber(d.source.y, d.target.y)
+    })
   
 }
 
 update()
+
+function dragstarted(d) {
+  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(d) {
+  d.fx = d3.event.x;
+  d.fy = d3.event.y;
+}
+
+function dragended(d) {
+  if (!d3.event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
