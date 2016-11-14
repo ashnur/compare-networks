@@ -53,12 +53,11 @@ node.append("title")
 const msg = svg.append("g")
 .attr("class", "msg")
 .selectAll("line")
-.data(G.links)
+.data([G.links[2]])
 .enter().append("line")
 .style("stroke", function(d) { return color(d.group)})
 
 .attr("stroke-width", function(d){ return 3 })
-
 
 
 function ticked() {
@@ -72,11 +71,20 @@ function ticked() {
     .attr("cx", function(d) { return d.x })
     .attr("cy", function(d) { return d.y })
 
-  const alpha = 1 - this.alpha()
-  msg
-    .attr("x1", function(d) { return d.source.x  })
-    .attr("y1", function(d) { return d.source.y  })
-    .attr("x2", function(d) { return d.source.x - (( d.source.x - d.target.x) * alpha) })
-    .attr("y2", function(d) { return d.source.y - (( d.source.y - d.target.y) * alpha) })
 }
 
+function update(){
+  var t = d3.transition()
+      .duration(100)
+      .ease(d3.easeLinear)
+
+  msg
+    .transition('t')
+    .attrTween("x1", function(d) { const i = d3.interpolate(d.source.x);                                return function(t){ return d.source.x   }})
+    .attrTween("y1", function(d) { const i = d3.interpolate(d.source.y);                                return function(t){ return d.source.x   }})
+    .attrTween("x2", function(d) { const i = d3.interpolateNumber(d.source.x, d.target.x); return function(t){l(i(t)); return i(t)   }})
+    .attrTween("y2", function(d) { const i = d3.interpolateNumber(d.source.y, d.target.y); return function(t){l(i(t)); return i(t)   }})
+  
+}
+
+update()
