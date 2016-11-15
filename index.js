@@ -18,13 +18,15 @@ const height =  +window.innerHeight
 //           ,{source:2, target: 3, index:2}
 //           ]}
 //const G = rg.BalancedTree(3, 5)
-const G = rg.WattsStrogatz.alpha(300, 4, 0.03)
+//const G = rg.WattsStrogatz.alpha(300, 4, 0.03)
 //const G = rg.ErdosRenyi.np(200, 0.)
+//const G = rg.BarabasiAlbert(300, 2, 1)
+const G = rg.BarabasiAlbert(300, 2, 2)
 const k = Math.sqrt(G.nodes.length / (width * height))
 const simulation = d3.forceSimulation()
       .force("link", d3.forceLink().distance(50))
-      .force("charge", d3.forceManyBody().strength(-0.1 / k))
-      .force("center", d3.forceCenter(width / 2, height / 3))
+      .force("charge", d3.forceManyBody().strength(-0.5 / k))
+      .force("center", d3.forceCenter(width / 2, height / 2))
 //      .stop()
 
 simulation.nodes(G.nodes).on("tick", ticked)
