@@ -51,46 +51,33 @@ var node = svg.append("g")
 node.append("title")
  .text(function(d, id) { return id })
 
+const rn = require('random-number')
+const randEdge = rn.generator({min: 0, max: G.links.length-1, integer: true})
+const randNode = rn.generator({min: 0, max: G.nodes.length-1, integer: true})
+const initNode = randNode()
+const touches = r.curry((node, link) => {
+  const z = link.source.index == node || link.target.index == node
+  console.log(node, link, z, link.source.index, link.target.index)
+  return z
+})
 
-const randEdge = require('random-number').generator({min: 0, max: G.links.length-1, integer: true})
-const initEdge = randEdge()
+const messages = [initNode]
 
+const initEdges = G.links.filter(touches(initNode)).map(r.assoc("from", initNode))
+console.log(initEdges)
 
 const msg = svg.append("g")
 .attr("class", "msg")
 .selectAll("line")
-.data([G.links[initEdge]])
+.data(initEdges)
 .enter().append("line")
 .style("stroke", function(d) { return color(d.group)})
-
-.attr("stroke-width", function(d){ return 3 })
-
-
-function ticked() {
-  link
-    .attr("x1", function(d) { return d.source.x })
-    .attr("y1", function(d) { return d.source.y })
-    .attr("x2", function(d) { return d.target.x })
-    .attr("y2", function(d) { return d.target.y })
-
-  node
-    .attr("cx", function(d) { return d.x })
-    .attr("cy", function(d) { return d.y })
-
-  msg
-    .attr("x1", function(d) { return d.source.x })
-    .attr("y1", function(d) { return d.source.y })
-    .attr("x2", function(d) { return d.target.x })
-    .attr("y2", function(d) { return d.target.y })
-
-}
-
-const byIndex = r.propEq('index')
-function update(){
-  msg
-    .transition()
-    .duration(2000)
-    .ease(d3.easeLinear)
+.transition()
+.duration(2000)
+.ease(d3.easeLinear)
+.on("start", function repeat() {
+  const message = this
+  d3.active(message)
     .attrTween("x1", function(d) {
       return function(){
         return link.data().find(byIndex(d.index)).source.x
@@ -104,8 +91,10 @@ function update(){
     .attrTween("x2", function(d) {
       return function(t){
         const p = link.data().find(byIndex(d.index))
-        //l(d3.interpolate(p.source.x, p.target.x)(t))
-        return d3.interpolate(p.source.x, p.target.x)(t)
+        debugger
+        const source = message.initNode ? p.source.x : p.target.x
+        const target = message.initNode ? p.target.x : p.source.x
+        return d3.interpolate(source, target)(t)
       }
     })
     .attrTween("y2", function(d) {
@@ -115,14 +104,43 @@ function update(){
         return d3.interpolate(p.source.y, p.target.y)(t)
       }
     })
+    .transition()
+    .on("start", repeat)
     .on("end", function(d){
       const line = this
       
     })
-  
+})
+
+.attr("stroke-width", function(d){ return 3 })
+
+function ticked() {
+  link
+    .attr("x1", function(d) { return d.source.x })
+    .attr("y1", function(d) { return d.source.y })
+    .attr("x2", function(d) { return d.target.x })
+    .attr("y2", function(d) { return d.target.y })
+
+  node
+    .attr("cx", function(d) { return d.x })
+    .attr("cy", function(d) { return d.y })
+
+  // msg
+  //   .attr("x1", function(d) { return d.source.x })
+  //   .attr("y1", function(d) { return d.source.y })
+  //   .attr("x2", function(d) { return d.target.x })
+  //   .attr("y2", function(d) { return d.target.y })
+
 }
 
-update()
+const byIndex = r.propEq('index')
+// function update(){
+//   msg
+//     .transition()
+  
+// }
+
+// update()
 
 function dragstarted(d) {
   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
