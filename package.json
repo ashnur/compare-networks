@@ -6,7 +6,8 @@
   "scripts": {
     "debug": "budo index.js -p 9967 --dir app/ --serve bundle.js --live=*.{js,html,css} --pushstate -- -t [ babelify --presets [ es2015 react stage-2 ] --plugins [ transform-es2015-destructuring datascript ] ] -t brfs",
     "watch-js": "budo index.js --cors --dir app/ -p 9967 --serve js/bundle.js --live=*.{js,html,css} --pushstate -- -t [ babelify --presets [ node6 ] --plugins [ datascript transform-es2015-destructuring browserify-hmr ] ] -t brfs ",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify index.js -o bundle.js -t [ babelify --presets [ es2015 react stage-2 ] --plugins [ transform-es2015-destructuring datascript ] ] -t brfs"
   },
   "keywords": [],
   "author": "",
