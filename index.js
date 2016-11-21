@@ -17,10 +17,10 @@ const canvas = d3.select("canvas")
 
 const context = canvas.node().getContext("2d")
 
-//const graph = rg.BalancedTree(3, 5)
+const graph = rg.BalancedTree(3, 5)
 //const graph = rg.WattsStrogatz.alpha(300, 4, 0.03)
 //const graph = rg.ErdosRenyi.np(200, 0.)
-const graph = rg.BarabasiAlbert(300, 2, 1)
+//const graph = rg.BarabasiAlbert(300, 2, 1)
 //const graph = rg.BarabasiAlbert(60, 2, 2)
 
 const rn = require('random-number')
@@ -33,9 +33,9 @@ const messages = [initNode]
 
 const simulation = d3.forceSimulation()
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("link", d3.forceLink().distance(100).strength(0.1))
+      .force("link", d3.forceLink().distance(100).strength(0.01))
       .force("collide", d3.forceCollide(5))
-      .force("charge", d3.forceManyBody().strength(-0.7))
+      .force("charge", d3.forceManyBody().distanceMin(100).strength(-1))
       .force("boxed", function(){
         const margin = 1
         for (let i = 0, n = nodes.length, node; i < n; ++i) {
@@ -82,6 +82,7 @@ update()
 function update(){
   const timer = d3.timer(function(elapsed){
     if ( elapsed < travelTime ) {
+      simulation.restart()
       for ( let i = 0; i < currentEdges.length; i++ ) {
         currentEdges[i].p = d3.easeCubic(1 - elapsed/travelTime)
       }
@@ -107,37 +108,37 @@ function update(){
 }
 
 
-function inTheDark(edge){
-  return (messages.indexOf(edge.source) > -1 ) ^ (messages.indexOf(edge.target) > -1 )
-}
+function inTheDark(edge){ return (messages.indexOf(edge.source) > -1 ) ^ (messages.indexOf(edge.target) > -1 ) }
 
-function notOld(edge){
-  return drawnEdges.indexOf(edge.index) == -1 && currentEdges.indexOf(edge.index) == -1
-}
+function notOld(edge){ return drawnEdges.indexOf(edge.index) == -1 }
+
+function notCurrent(edge){ return currentEdges.indexOf(edge.index) == -1 }
+
+function neitherOldNorCurrent(edge){ return notOld(edge) && notOld(edge) }
 
 function ticked() {
   context.clearRect(0, 0, width, height)
 
   context.beginPath()
-  forceEdges.filter(notOld).forEach(drawLink)
-  context.globalAlpha = 0.12
+  forceEdges.filter(neitherOldNorCurrent).forEach(drawLink)
+  // context.globalAlpha = 0.12
   context.strokeStyle = "#999"
   context.stroke()
 
   context.beginPath()
   nodes.forEach(drawNode)
-  context.globalAlpha = 1
+  // context.globalAlpha = 1
   context.fillStyle = d3.interpolateViridis(0.335)
   context.fill()
 
   context.beginPath()
-  currentEdges.forEach(drawMessage)
-  context.globalAlpha = 0.3
+  currentEdges.filter(notOld).forEach(drawMessage)
+  // context.globalAlpha = 0.3
   context.stroketyle = "#007"
   context.stroke()
 
   context.beginPath()
-  drawnEdges.forEach(drawOldMessage)
+  drawnEdges.filter(notCurrent).forEach(drawOldMessage)
   context.globalAlpha = 0.3
   context.strokeStyle = "#007"
   context.stroke()
