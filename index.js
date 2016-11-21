@@ -16,11 +16,12 @@ const canvas = d3.select("canvas")
     .attr("height", height)
 
 const context = canvas.node().getContext("2d")
+context.globalAlpha = 1
 
-const graph = rg.BalancedTree(3, 5)
+//const graph = rg.BalancedTree(3, 2)
 //const graph = rg.WattsStrogatz.alpha(300, 4, 0.03)
-//const graph = rg.ErdosRenyi.np(200, 0.)
-//const graph = rg.BarabasiAlbert(300, 2, 1)
+//const graph = rg.ErdosRenyi.np(200, 0.01)
+const graph = rg.BarabasiAlbert(3000, 2, 2)
 //const graph = rg.BarabasiAlbert(60, 2, 2)
 
 const rn = require('random-number')
@@ -33,9 +34,9 @@ const messages = [initNode]
 
 const simulation = d3.forceSimulation()
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("link", d3.forceLink().distance(100).strength(0.01))
+      .force("link", d3.forceLink().distance(50).strength(0.02))
       .force("collide", d3.forceCollide(5))
-      .force("charge", d3.forceManyBody().distanceMin(100).strength(-1))
+      .force("charge", d3.forceManyBody().distanceMin(20).strength(-1))
       .force("boxed", function(){
         const margin = 1
         for (let i = 0, n = nodes.length, node; i < n; ++i) {
@@ -58,7 +59,7 @@ function addDirections(link){
   return r.merge({to, from, p: 0}, link)
 }
 
-const forceEdges = JSON.parse(JSON.stringify(graph.edges))
+let forceEdges = JSON.parse(JSON.stringify(graph.edges))
 let currentEdges = graph.edges.filter(touches(initNode)).map(addDirections)
 const drawnEdges = []
 const nodes = graph.nodes.map((value, id)=>{return {id,value}})
@@ -84,11 +85,12 @@ function update(){
     if ( elapsed < travelTime ) {
       simulation.restart()
       for ( let i = 0; i < currentEdges.length; i++ ) {
-        currentEdges[i].p = d3.easeCubic(1 - elapsed/travelTime)
+        currentEdges[i].p = d3.easeCubic(elapsed/travelTime)
       }
     } else {
       timer.stop()
       currentEdges.forEach((ie) => drawnEdges.push(ie))
+      forceEdges = forceEdges.filter((fe) => currentEdges.find((ce) => ce.index != fe.index))
       // add nodes to messages 
       currentEdges.forEach((edge) => {
         if ( messages.indexOf(edge.from) == -1 ) {
@@ -110,38 +112,32 @@ function update(){
 
 function inTheDark(edge){ return (messages.indexOf(edge.source) > -1 ) ^ (messages.indexOf(edge.target) > -1 ) }
 
-function notOld(edge){ return drawnEdges.indexOf(edge.index) == -1 }
-
-function notCurrent(edge){ return currentEdges.indexOf(edge.index) == -1 }
-
-function neitherOldNorCurrent(edge){ return notOld(edge) && notOld(edge) }
 
 function ticked() {
   context.clearRect(0, 0, width, height)
 
+
+  context.globalAlpha = 0.22
   context.beginPath()
-  forceEdges.filter(neitherOldNorCurrent).forEach(drawLink)
-  // context.globalAlpha = 0.12
+  forceEdges.forEach(drawLink)
   context.strokeStyle = "#999"
+  context.stroke()
+  context.globalAlpha = 1
+
+  context.beginPath()
+  drawnEdges.forEach(drawOldMessage)
+  context.strokeStyle = "#007"
   context.stroke()
 
   context.beginPath()
-  nodes.forEach(drawNode)
-  // context.globalAlpha = 1
-  context.fillStyle = d3.interpolateViridis(0.335)
-  context.fill()
-
-  context.beginPath()
-  currentEdges.filter(notOld).forEach(drawMessage)
-  // context.globalAlpha = 0.3
+  currentEdges.forEach(drawMessage)
   context.stroketyle = "#007"
   context.stroke()
 
   context.beginPath()
-  drawnEdges.filter(notCurrent).forEach(drawOldMessage)
-  context.globalAlpha = 0.3
-  context.strokeStyle = "#007"
-  context.stroke()
+  nodes.forEach(drawNode)
+  context.fillStyle = d3.interpolateViridis(0.335)
+  context.fill()
 }
 
 function drawOldMessage(message) {
@@ -155,8 +151,8 @@ function drawMessage(message) {
   const source = nodes[message.from]
   const target = nodes[message.to]
   const {x, y} = d3.interpolate(source, target)(message.p)
-  context.moveTo(x, y)
-  context.lineTo(target.x, target.y)
+  context.moveTo(source.x, source.y)
+  context.lineTo(x, y)
 }
 
 function drawLink(d) {
@@ -166,7 +162,7 @@ function drawLink(d) {
 
 function drawNode(d) {
   context.moveTo(d.x + 2.5, d.y)
-  context.arc(d.x, d.y, messages.indexOf(d.index) > -1 ? 2.5 : 2.5, 0, 2 * Math.PI)
+  context.arc(d.x, d.y, 2.5, 0, 2 * Math.PI)
 }
 
 function dragsubject() {
