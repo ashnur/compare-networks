@@ -38,7 +38,6 @@ const inTheDark = (edge) => (messages.indexOf(edge.source) > -1 ) ^ (messages.in
 
 
 const graph = require('./graph.js')
-console.log(JSON.stringify(graph))
 const randNode = rn.generator({min: 0, max: graph.nodes.length-1, integer: true})
 const initNode = randNode()
 const messages = [initNode]
