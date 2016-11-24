@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "debug": "budo index.js -p 9967 --dir app/ --serve bundle.js --live=*.{js,html,css} --pushstate -- -t [ babelify --presets [ es2015 react stage-2 ] --plugins [ transform-es2015-destructuring datascript ] ] -t brfs",
+    "debug": "budo index.js -p 9967 --dir app/ --serve bundle.js --live=*.{js,html,css} --pushstate -- -t [ babelify --presets [ react es2015 ] --plugins [ transform-es2015-destructuring datascript ] ] -t brfs",
     "watch-js": "budo index.js --cors --dir app/ -p 9967 --serve js/bundle.js --live=*.{js,html,css} --pushstate -- -t [ babelify --presets [ node6 ] --plugins [ datascript transform-es2015-destructuring browserify-hmr ] ] -t brfs ",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "browserify --debug index.js -o bundle.js -t [ babelify --presets [ es2015 react stage-2 ] --plugins [ transform-es2015-destructuring datascript ] ] -t brfs"
@@ -15,6 +15,7 @@
   "dependencies": {
     "chance": "^1.0.4",
     "d3": "^4.3.0",
+    "dat.gui": "^0.6.1",
     "global": "^4.3.1",
     "jsnetworkx": "^0.3.4",
     "mori": "^0.3.2",
